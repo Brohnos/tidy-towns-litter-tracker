@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tidy Towns Trash Tracker</title>
+
+<style>
+    #map {
+        height: 100vh; /* This makes the map take up the full height of the page */
+        width: 100%; /* This makes the map take up the full width of the page */
+    }
+</style>
+
+</head>
+<body>
+    <!-- We'll add our map here later -->
+    <div id="map"></div>
+
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-app.js"></script>
+
+    <!-- Add Firebase products that you want to use -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.1/firebase-firestore.js"></script>
+
+    <script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCOEpz-LCmMsvoDOkH6CdqUsAfh42DTmug",
+  authDomain: "tidy-towns-litter-tracker.firebaseapp.com",
+  databaseURL: "https://tidy-towns-litter-tracker-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "tidy-towns-litter-tracker",
+  storageBucket: "tidy-towns-litter-tracker.appspot.com",
+  messagingSenderId: "532639980959",
+  appId: "1:532639980959:web:a62234e579947ce5a831aa",
+  measurementId: "G-SZZW59VS4Q"
+};
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // Get a reference to the Firestore database
+    let db = firebase.firestore();
+
+    // Create a new map
+    function initMap() {
+        var map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: 52.260465, lng: -7.010256}, // Coordinates for Faithlegg
+            zoom: 14
+        });
+
+        // Load the markers from Firestore
+        db.collection("markers").get().then((querySnapshot) => {
+            querySnapshot.forEach((doc) => {
+                let data = doc.data();
+
+                // Create a new marker
+                let marker = new google.maps.Marker({
+                    position: { lat: data.lat, lng: data.lng },
+                    map: map,
+                    draggable: true,
+                });
+
+                // Create a new info window and set its content
+                let infoWindow = new google.maps.InfoWindow({
+                    content: "<textarea id='comment-" + doc.id + "'>" + (data.comment || '') + "</textarea><button id='save-" + doc.id + "'>Save</button><button id='delete-" + doc.id + "'>Delete</button>"
+                });
+
+                // Add a click listener to the marker to open the info window
+                marker.addListener("click", () => {
+                    infoWindow.open(map, marker);
+                });
+
+                // Add a click listener to the info window's save and delete buttons
+                google.maps.event.addListener(infoWindow, 'domready', () => {
+                    document.getElementById('save-' + doc.id).addEventListener('click', () => {
+                        let comment = document.getElementById('comment-' + doc.id).value;
+                        db.collection("markers").doc(doc.id).update({
+                            comment: comment
+                        }).then(() => {
+                            console.log("Document successfully updated!");
+                        });
+                                                infoWindow.close();
+                    });
+
+                    document.getElementById('delete-' + doc.id).addEventListener('click', () => {
+                        // Delete the marker from Firestore
+                        db.collection("markers").doc(doc.id).delete().then(() => {
+                            console.log("Document successfully deleted!");
+
+                            // Remove the marker from the map
+                            marker.setMap(null);
+
+                            // Close the info window
+                            infoWindow.close();
+                        }).catch((error) => {
+                            console.error("Error removing document: ", error);
+                        });
+                    });
+                });
+            });
+        });
+    }
+    </script>
+
+    <!-- Google Maps JavaScript API -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCOEpz-LCmMsvoDOkH6CdqUsAfh42DTmug&callback=initMap"></script>
+
+</body>
+</html>
+
