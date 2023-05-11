@@ -41,57 +41,78 @@ const firebaseConfig = {
 
     // Create a new map
     function initMap() {
-        var map = new google.maps.Map(document.getElementById('map'), {
-            center: {lat: 52.260465, lng: -7.010256}, // Coordinates for Faithlegg
-            zoom: 14
+    var map = new google.maps.Map(document.getElementById('map'), {
+        center: {lat: 52.260465, lng: -7.010256}, // Coordinates for Faithlegg
+        zoom: 14
+    });
+
+    let markersMapping = {};
+
+    db.collection("markers").onSnapshot((querySnapshot) => {
+        querySnapshot.docChanges().forEach((change) => {
+            let data = change.doc.data();
+            let docId = change.doc.id;
+
+            if (change.type === "added") {
+                let marker = createMarker(data.lat, data.lng, docId, map, db);
+                markersMapping[docId] = marker;
+            } else if (change.type === "modified") {
+                let marker = markersMapping[docId];
+                let infoWindow = marker.infoWindow;
+                infoWindow.setContent("<textarea id='comment-" + docId + "'>" + (data.comment || '') + "</textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button>");
+            } else if (change.type === "removed") {
+                let marker = markersMapping[docId];
+                marker.setMap(null);
+                delete markersMapping[docId];
+            }
+        });
+    });
+
+    map.addListener("click", (
+event) => {
+        let lat = event.latLng.lat();
+        let lng = event.latLng.lng();
+
+        db.collection("markers").add({
+            lat: lat,
+            lng: lng
+        }).then((docRef) => {
+            let marker = createMarker(lat, lng, docRef.id, map, db);
+            markersMapping[docRef.id] = marker;
+        }).catch((error) => {
+            console.error("Error adding document: ", error);
+        });
+    });
+}
+
+
+    google.maps.event.addListener(infoWindow, 'domready', () => {
+        document.getElementById('save-' + docId).addEventListener('click', () => {
+            let comment = document.getElementById('comment-' + docId).value;
+            db.collection("markers").doc(docId).update({
+                comment: comment
+            }).then(() => {
+                console.log("Document successfully updated!");
+            });
+            infoWindow.close();
         });
 
-        // Load the markers from Firestore
-        db.collection("markers").get().then((querySnapshot) => {
-            querySnapshot.forEach((doc) => {
-                let data = doc.data();
+        document.getElementById('delete-' + docId).addEventListener('click', () => {
+            db.collection("markers").doc(docId).delete().then(() => {
+                console.log("Document successfully deleted!");
+                marker.setMap(null);
+                infoWindow.close();
+            }).catch((error) => {
+                console.error("Error removing document: ", error);
+            });
+        });
+    });
 
-                // Create a new marker
-                let marker = new google.maps.Marker({
-                    position: { lat: data.lat, lng: data.lng },
-                    map: map,
-                    draggable: true,
-                });
+    marker.infoWindow = infoWindow;
 
-                // Create a new info window and set its content
-                let infoWindow = new google.maps.InfoWindow({
-                    content: "<textarea id='comment-" + doc.id + "'>" + (data.comment || '') + "</textarea><button id='save-" + doc.id + "'>Save</button><button id='delete-" + doc.id + "'>Delete</button>"
-                });
+    return marker;
+}
 
-                // Add a click listener to the marker to open the info window
-                marker.addListener("click", () => {
-                    infoWindow.open(map, marker);
-                });
-
-                // Add a click listener to the info window's save and delete buttons
-                google.maps.event.addListener(infoWindow, 'domready', () => {
-                    document.getElementById('save-' + doc.id).addEventListener('click', () => {
-                        let comment = document.getElementById('comment-' + doc.id).value;
-                        db.collection("markers").doc(doc.id).update({
-                            comment: comment
-                        }).then(() => {
-                            console.log("Document successfully updated!");
-                        });
-                        infoWindow.close();
-                    });
-
-                    document.getElementById('delete-' + doc.id).addEventListener('click', () => {
-                        // Delete the marker from Firestore
-                                                db.collection("markers").doc(doc.id).delete().then(() => {
-                            console.log("Document successfully deleted!");
-
-                            // Remove the marker from the map
-                            marker.setMap(null);
-
-                            // Close the info window
-                            infoWindow.close();
-                        }).catch((error) => {
-                            console.error("Error removing document: ", error);
                         });
                     });
                 });
