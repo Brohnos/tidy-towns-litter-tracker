@@ -84,9 +84,10 @@ const firebaseConfig = {
 // Create a new map
 function initMap() {
     var map = new google.maps.Map(document.getElementById('map'), {
-        center: {lat: 52.260465, lng: -7.010256}, // Coordinates for Faithlegg
-        zoom: 14
-    });
+    center: {lat: 52.260465, lng: -7.010256}, // Coordinates for Faithlegg
+    zoom: 14,
+    mapTypeId: 'satellite' // Set the map type to satellite
+});
 
     let markersMapping = {};
 
