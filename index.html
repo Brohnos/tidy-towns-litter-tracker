@@ -39,8 +39,50 @@ const firebaseConfig = {
     // Get a reference to the Firestore database
     let db = firebase.firestore();
 
-    // Create a new map
-    function initMap() {
+    function createMarker(lat, lng, docId, map, db) {
+    let marker = new google.maps.Marker({
+        position: { lat: lat, lng: lng },
+        map: map,
+        draggable: true,
+    });
+
+    let infoWindow = new google.maps.InfoWindow({
+        content: "<textarea id='comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button>"
+    });
+
+    marker.addListener("click", () => {
+        infoWindow.open(map, marker);
+    });
+
+    google.maps.event.addListener(infoWindow, 'domready', () => {
+        document.getElementById('save-' + docId).addEventListener('click', () => {
+            let comment = document.getElementById('comment-' + docId).value;
+            db.collection("markers").doc(docId).update({
+                comment: comment
+            }).then(() => {
+                console.log("Document successfully updated!");
+            });
+            infoWindow.close();
+        });
+
+        document.getElementById('delete-' + docId).addEventListener('click', () => {
+            db.collection("markers").doc(docId).delete().then(() => {
+                console.log("Document successfully deleted!");
+                                marker.setMap(null);
+                infoWindow.close();
+            }).catch((error) => {
+                console.error("Error removing document: ", error);
+            });
+        });
+    });
+
+    marker.infoWindow = infoWindow;
+
+    return marker;
+}
+
+// Create a new map
+function initMap() {
     var map = new google.maps.Map(document.getElementById('map'), {
         center: {lat: 52.260465, lng: -7.010256}, // Coordinates for Faithlegg
         zoom: 14
@@ -68,8 +110,7 @@ const firebaseConfig = {
         });
     });
 
-    map.addListener("click", (
-event) => {
+    map.addListener("click", (event) => {
         let lat = event.latLng.lat();
         let lng = event.latLng.lng();
 
@@ -85,96 +126,6 @@ event) => {
     });
 }
 
-
-    google.maps.event.addListener(infoWindow, 'domready', () => {
-        document.getElementById('save-' + docId).addEventListener('click', () => {
-            let comment = document.getElementById('comment-' + docId).value;
-            db.collection("markers").doc(docId).update({
-                comment: comment
-            }).then(() => {
-                console.log("Document successfully updated!");
-            });
-            infoWindow.close();
-        });
-
-        document.getElementById('delete-' + docId).addEventListener('click', () => {
-            db.collection("markers").doc(docId).delete().then(() => {
-                console.log("Document successfully deleted!");
-                marker.setMap(null);
-                infoWindow.close();
-            }).catch((error) => {
-                console.error("Error removing document: ", error);
-            });
-        });
-    });
-
-    marker.infoWindow = infoWindow;
-
-    return marker;
-}
-
-                        });
-                    });
-                });
-            });
-        });
-
-        // Add a listener for clicks on the map to add new markers
-        map.addListener("click", (e) => {
-            // Create a new marker
-            let marker = new google.maps.Marker({
-                position: e.latLng,
-                map: map,
-                draggable: true,
-            });
-
-            // Create a new marker document in Firestore
-            db.collection("markers").add({
-                lat: e.latLng.lat(),
-                lng: e.latLng.lng()
-            }).then((docRef) => {
-                // Create a new info window and set its content
-                let infoWindow = new google.maps.InfoWindow({
-                    content: "<textarea id='comment-" + docRef.id + "'></textarea><button id='save-" + docRef.id + "'>Save</button><button id='delete-" + docRef.id + "'>Delete</button>"
-                });
-
-                // Add a click listener to the marker to open the info window
-                marker.addListener("click", () => {
-                    infoWindow.open(map, marker);
-                });
-
-                // Add a click listener to the info window's save and delete buttons
-                google.maps.event.addListener(infoWindow, 'domready', () => {
-                    document.getElementById('save-' + docRef.id).addEventListener('click', () => {
-                        let comment = document.getElementById('comment-' + docRef.id).value;
-                        db.collection("markers").doc(docRef.id).update({
-                            comment: comment
-                        }).then(() => {
-                            console.log("Document successfully updated!");
-                        });
-                        infoWindow.close();
-                    });
-
-                    document.getElementById('delete-' + docRef.id).addEventListener('click', () => {
-                        // Delete the marker from Firestore
-                        db.collection("markers").doc(docRef.id).delete().then(() => {
-                            console.log("Document successfully deleted!");
-
-                            // Remove the marker from the map
-                            marker.setMap(null);
-
-                            // Close the info window
-                            infoWindow.close();
-                        }).catch((error) => {
-                            console.error("Error removing document: ", error);
-                        });
-                    });
-                });
-            }).catch((error) => {
-                console.error("Error adding document: ", error);
-            });
-        });
-    }
     </script>
 
     <!-- Google Maps JavaScript API -->
@@ -183,4 +134,4 @@ event) => {
 </body>
 </html>
 
-                       
+               
