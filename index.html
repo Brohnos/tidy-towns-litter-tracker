@@ -77,12 +77,12 @@ const firebaseConfig = {
                         }).then(() => {
                             console.log("Document successfully updated!");
                         });
-                                                infoWindow.close();
+                        infoWindow.close();
                     });
 
                     document.getElementById('delete-' + doc.id).addEventListener('click', () => {
                         // Delete the marker from Firestore
-                        db.collection("markers").doc(doc.id).delete().then(() => {
+                                                db.collection("markers").doc(doc.id).delete().then(() => {
                             console.log("Document successfully deleted!");
 
                             // Remove the marker from the map
@@ -97,6 +97,62 @@ const firebaseConfig = {
                 });
             });
         });
+
+        // Add a listener for clicks on the map to add new markers
+        map.addListener("click", (e) => {
+            // Create a new marker
+            let marker = new google.maps.Marker({
+                position: e.latLng,
+                map: map,
+                draggable: true,
+            });
+
+            // Create a new marker document in Firestore
+            db.collection("markers").add({
+                lat: e.latLng.lat(),
+                lng: e.latLng.lng()
+            }).then((docRef) => {
+                // Create a new info window and set its content
+                let infoWindow = new google.maps.InfoWindow({
+                    content: "<textarea id='comment-" + docRef.id + "'></textarea><button id='save-" + docRef.id + "'>Save</button><button id='delete-" + docRef.id + "'>Delete</button>"
+                });
+
+                // Add a click listener to the marker to open the info window
+                marker.addListener("click", () => {
+                    infoWindow.open(map, marker);
+                });
+
+                // Add a click listener to the info window's save and delete buttons
+                google.maps.event.addListener(infoWindow, 'domready', () => {
+                    document.getElementById('save-' + docRef.id).addEventListener('click', () => {
+                        let comment = document.getElementById('comment-' + docRef.id).value;
+                        db.collection("markers").doc(docRef.id).update({
+                            comment: comment
+                        }).then(() => {
+                            console.log("Document successfully updated!");
+                        });
+                        infoWindow.close();
+                    });
+
+                    document.getElementById('delete-' + docRef.id).addEventListener('click', () => {
+                        // Delete the marker from Firestore
+                        db.collection("markers").doc(docRef.id).delete().then(() => {
+                            console.log("Document successfully deleted!");
+
+                            // Remove the marker from the map
+                            marker.setMap(null);
+
+                            // Close the info window
+                            infoWindow.close();
+                        }).catch((error) => {
+                            console.error("Error removing document: ", error);
+                        });
+                    });
+                });
+            }).catch((error) => {
+                console.error("Error adding document: ", error);
+            });
+        });
     }
     </script>
 
@@ -106,3 +162,4 @@ const firebaseConfig = {
 </body>
 </html>
 
+                       
