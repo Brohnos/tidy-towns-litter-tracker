@@ -167,18 +167,15 @@ function initMap() {
         });
     });
 
-    // Add a click event listener to the map to create a new marker when the map is clicked
-    map.addListener('click', function(e) {
-        let lat = e.latLng.lat();
-        let lng = e.latLng.lng();
-
+    // This section of code allows users to add new markers by clicking on the map
+    map.addListener("click", (e) => {
         db.collection("markers").add({
-            lat: lat,
-            lng: lng,
-            comment: ""
+            lat: e.latLng.lat(),
+            lng: e.latLng.lng(),
+            comment: ''
         })
-                .then((docRef) => {
-            console.log("Document written with ID: ", docRef.id);
+        .then((docRef) => {
+              console.log("Document written with ID: ", docRef.id);
         })
         .catch((error) => {
             console.error("Error adding document: ", error);
