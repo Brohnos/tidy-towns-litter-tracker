@@ -46,14 +46,12 @@ const firebaseConfig = {
         draggable: true
     });
 
-    // Including 'Cancel' button in the content of the info window
     let infoWindow = new google.maps.InfoWindow({
         content: "<textarea id='comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button>"
     });
 
-    marker.addListener("click", () => {
-        infoWindow.open(map, marker);
-    });
+    // Open the info window immediately
+    infoWindow.open(map, marker);
 
     google.maps.event.addListener(infoWindow, 'domready', () => {
         document.getElementById('save-' + docId).addEventListener('click', () => {
@@ -63,19 +61,36 @@ const firebaseConfig = {
             }).then(() => {
                 console.log("Document successfully updated!");
                 infoWindow.close();
+                // Refresh the page
+                window.location.reload();
             });
         });
 
-        // Closing the info window when 'Cancel' button is clicked
-        document.getElementById('cancel-' + docId).addEventListener('click', () => {
-            infoWindow.close();
-        });
+     document.getElementById('cancel-' + docId).addEventListener('click', () => {
+    // Delete the marker from Firestore
+    db.collection("markers").doc(docId).delete().then(() => {
+        console.log("Marker successfully deleted!");
+
+        // Remove the marker from the map
+        marker.setMap(null);
+
+        // Close the info window
+        infoWindow.close();
+
+        // Refresh the page
+        window.location.reload();
+    }).catch((error) => {
+        console.error("Error removing marker: ", error);
+    });
+});
 
         document.getElementById('delete-' + docId).addEventListener('click', () => {
             db.collection("markers").doc(docId).delete().then(() => {
                 console.log("Document successfully deleted!");
                 marker.setMap(null);
                 infoWindow.close();
+                // Refresh the page
+                window.location.reload();
             }).catch((error) => {
                 console.error("Error removing document: ", error);
             });
