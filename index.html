@@ -107,7 +107,7 @@ function initMap() {
 
     let markersMapping = {};
 
-   db.collection("markers").onSnapshot((querySnapshot) => {
+  db.collection("markers").onSnapshot((querySnapshot) => {
     querySnapshot.docChanges().forEach((change) => {
         let data = change.doc.data();
         let docId = change.doc.id;
@@ -155,6 +155,17 @@ function initMap() {
                     });
                 }, 100);
             });
+
+            if (!infoWindow.getMap() || infoWindow.getMap() === null) {
+                infoWindow.open(map, marker);
+            }
+        } else if (change.type === "removed") {
+            let marker = markersMapping[docId];
+            marker.setMap(null);
+            delete markersMapping[docId];
+        }
+    });
+});
 
             if (!infoWindow.getMap() || infoWindow.getMap() === null) {
                 infoWindow.open(map, marker);
