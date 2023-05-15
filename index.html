@@ -46,47 +46,47 @@ function createMarker(lat, lng, docId, map, db, openInfoWindow = false) {
         map: map
     });
 
-  let infoWindow = new google.maps.InfoWindow({
-    content: "<p>Leave comment</p><textarea id='input-comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button><p>Comments</p><textarea id='display-comment-" + docId + "' readonly></textarea>"
-});
+    let infoWindow = new google.maps.InfoWindow({
+        content: "<p>Leave comment</p><textarea id='input-comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button><p>Comments</p><textarea id='display-comment-" + docId + "' readonly></textarea>"
+    });
 
     marker.addListener("click", () => {
         infoWindow.open(map, marker);
-    });
 
-    document.getElementById('save-' + docId).addEventListener('click', () => {
-    let comment = document.getElementById('input-comment-' + docId).value;
-    let existingComments = document.getElementById('display-comment-' + docId).value;
-    let newComments = existingComments + "\n" + new Date().toLocaleString() + " - " + comment;
-    db.collection("markers").doc(docId).update({
-        comment: newComments
-    }).then(() => {
-        console.log("Document successfully updated!");
-        location.reload();
-    }).catch((error) => {
-        console.error("Error updating document: ", error);
-    });
-});
-
-        document.getElementById('delete-' + docId).addEventListener('click', () => {
-            db.collection("markers").doc(docId).delete().then(() => {
-                console.log("Document successfully deleted!");
-                location.reload();
-            }).catch((error) => {
-                console.error("Error removing document: ", error);
+        setTimeout(() => { // Ensure the content is loaded before we try to add event listeners
+            document.getElementById('save-' + docId).addEventListener('click', () => {
+                let comment = document.getElementById('input-comment-' + docId).value;
+                let existingComments = document.getElementById('display-comment-' + docId).value;
+                let newComments = existingComments + "\n" + new Date().toLocaleString() + " - " + comment;
+                db.collection("markers").doc(docId).update({
+                    comment: newComments
+                }).then(() => {
+                    console.log("Document successfully updated!");
+                    location.reload();
+                }).catch((error) => {
+                    console.error("Error updating document: ", error);
+                });
             });
-        });
 
-        document.getElementById('cancel-' + docId).addEventListener('click', () => {
-            db.collection("markers").doc(docId).delete().then(() => {
-                console.log("Marker cancelled!");
-                location.reload();
-            }).catch((error) => {
-                console.error("Error removing document: ", error);
+            document.getElementById('delete-' + docId).addEventListener('click', () => {
+                db.collection("markers").doc(docId).delete().then(() => {
+                    console.log("Document successfully deleted!");
+                    location.reload();
+                }).catch((error) => {
+                    console.error("Error removing document: ", error);
+                });
             });
-        });
-    }, 100);
-});
+
+            document.getElementById('cancel-' + docId).addEventListener('click', () => {
+                db.collection("markers").doc(docId).delete().then(() => {
+                    console.log("Marker cancelled!");
+                    location.reload();
+                }).catch((error) => {
+                    console.error("Error removing document: ", error);
+                });
+            });
+        }, 100);
+    });
 
     if(openInfoWindow) {
         infoWindow.open(map, marker);
