@@ -40,11 +40,10 @@ const firebaseConfig = {
     let db = firebase.firestore();
 
     // Create a new marker
-function createMarker(lat, lng, docId, map, db, openInfoWindowImmediately = false) {
+function createMarker(lat, lng, docId, map, db, openInfoWindow = false) {
     let marker = new google.maps.Marker({
-        position: { lat: lat, lng: lng },
-        map: map,
-        draggable: true,
+        position: new google.maps.LatLng(lat, lng),
+        map: map
     });
 
     let infoWindow = new google.maps.InfoWindow({
@@ -62,17 +61,16 @@ function createMarker(lat, lng, docId, map, db, openInfoWindowImmediately = fals
                 comment: comment
             }).then(() => {
                 console.log("Document successfully updated!");
-                infoWindow.close();
-                window.location.reload();
+                location.reload();
+            }).catch((error) => {
+                console.error("Error updating document: ", error);
             });
         });
 
         document.getElementById('delete-' + docId).addEventListener('click', () => {
             db.collection("markers").doc(docId).delete().then(() => {
                 console.log("Document successfully deleted!");
-                marker.setMap(null);
-                infoWindow.close();
-                window.location.reload();
+                location.reload();
             }).catch((error) => {
                 console.error("Error removing document: ", error);
             });
@@ -80,21 +78,19 @@ function createMarker(lat, lng, docId, map, db, openInfoWindowImmediately = fals
 
         document.getElementById('cancel-' + docId).addEventListener('click', () => {
             db.collection("markers").doc(docId).delete().then(() => {
-                console.log("Marker successfully deleted!");
-                marker.setMap(null);
-                infoWindow.close();
-                window.location.reload();
+                console.log("Marker cancelled!");
+                location.reload();
             }).catch((error) => {
-                console.error("Error removing marker: ", error);
+                console.error("Error removing document: ", error);
             });
         });
     });
 
-    marker.infoWindow = infoWindow;
-
-    if (openInfoWindowImmediately) {
-        setTimeout(() => infoWindow.open(map, marker), 200);
+    if(openInfoWindow) {
+        infoWindow.open(map, marker);
     }
+
+    marker.infoWindow = infoWindow;
 
     return marker;
 }
