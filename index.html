@@ -168,18 +168,20 @@ function initMap() {
 
     // This section of code allows users to add new markers by clicking on the map
     map.addListener("click", (e) => {
-        db.collection("markers").add({
-            lat: e.latLng.lat(),
-            lng: e.latLng.lng(),
-            comment: ''
-        })
-        .then((docRef) => {
-              console.log("Document written with ID: ", docRef.id);
-        })
-        .catch((error) => {
-            console.error("Error adding document: ", error);
-        });
+    db.collection("markers").add({
+        lat: e.latLng.lat(),
+        lng: e.latLng.lng(),
+        comment: ''
+    })
+    .then((docRef) => {
+        console.log("Document written with ID: ", docRef.id);
+        createMarker(e.latLng.lat(), e.latLng.lng(), docRef.id, map, db, true);
+    })
+    .catch((error) => {
+        console.error("Error adding document: ", error);
     });
+});
+
 }
     </script>
     
