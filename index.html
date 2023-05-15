@@ -55,6 +55,8 @@ function createMarker(lat, lng, docId, map, db, openInfoWindow = false) {
     });
 
     google.maps.event.addListener(infoWindow, 'domready', () => {
+    // Delay the addition of event listeners by 100ms to ensure all elements have been loaded
+    setTimeout(() => {
         document.getElementById('save-' + docId).addEventListener('click', () => {
             let comment = document.getElementById('comment-' + docId).value;
             db.collection("markers").doc(docId).update({
@@ -84,7 +86,8 @@ function createMarker(lat, lng, docId, map, db, openInfoWindow = false) {
                 console.error("Error removing document: ", error);
             });
         });
-    });
+    }, 100);
+});
 
     if(openInfoWindow) {
         infoWindow.open(map, marker);
