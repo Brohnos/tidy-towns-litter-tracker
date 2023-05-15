@@ -43,11 +43,12 @@ const firebaseConfig = {
     let marker = new google.maps.Marker({
         position: { lat: lat, lng: lng },
         map: map,
-        draggable: true,
+        draggable: true
     });
 
+    // Including 'Cancel' button in the content of the info window
     let infoWindow = new google.maps.InfoWindow({
-        content: "<textarea id='comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button>"
+        content: "<textarea id='comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button>"
     });
 
     marker.addListener("click", () => {
@@ -61,14 +62,19 @@ const firebaseConfig = {
                 comment: comment
             }).then(() => {
                 console.log("Document successfully updated!");
+                infoWindow.close();
             });
+        });
+
+        // Closing the info window when 'Cancel' button is clicked
+        document.getElementById('cancel-' + docId).addEventListener('click', () => {
             infoWindow.close();
         });
 
         document.getElementById('delete-' + docId).addEventListener('click', () => {
             db.collection("markers").doc(docId).delete().then(() => {
                 console.log("Document successfully deleted!");
-                                marker.setMap(null);
+                marker.setMap(null);
                 infoWindow.close();
             }).catch((error) => {
                 console.error("Error removing document: ", error);
