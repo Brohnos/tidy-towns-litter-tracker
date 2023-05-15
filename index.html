@@ -39,19 +39,21 @@ const firebaseConfig = {
     // Get a reference to the Firestore database
     let db = firebase.firestore();
 
-    function createMarker(lat, lng, docId, map, db) {
+    // Create a new marker
+function createMarker(lat, lng, docId, map, db, openInfoWindowImmediately = false) {
     let marker = new google.maps.Marker({
         position: { lat: lat, lng: lng },
         map: map,
-        draggable: true
+        draggable: true,
     });
 
     let infoWindow = new google.maps.InfoWindow({
         content: "<textarea id='comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button>"
     });
 
-    // Open the info window immediately
-    infoWindow.open(map, marker);
+    marker.addListener("click", () => {
+        infoWindow.open(map, marker);
+    });
 
     google.maps.event.addListener(infoWindow, 'domready', () => {
         document.getElementById('save-' + docId).addEventListener('click', () => {
@@ -61,46 +63,52 @@ const firebaseConfig = {
             }).then(() => {
                 console.log("Document successfully updated!");
                 infoWindow.close();
-                // Refresh the page
                 window.location.reload();
             });
         });
-
-     document.getElementById('cancel-' + docId).addEventListener('click', () => {
-    // Delete the marker from Firestore
-    db.collection("markers").doc(docId).delete().then(() => {
-        console.log("Marker successfully deleted!");
-
-        // Remove the marker from the map
-        marker.setMap(null);
-
-        // Close the info window
-        infoWindow.close();
-
-        // Refresh the page
-        window.location.reload();
-    }).catch((error) => {
-        console.error("Error removing marker: ", error);
-    });
-});
 
         document.getElementById('delete-' + docId).addEventListener('click', () => {
             db.collection("markers").doc(docId).delete().then(() => {
                 console.log("Document successfully deleted!");
                 marker.setMap(null);
                 infoWindow.close();
-                // Refresh the page
                 window.location.reload();
             }).catch((error) => {
                 console.error("Error removing document: ", error);
+            });
+        });
+
+        document.getElementById('cancel-' + docId).addEventListener('click', () => {
+            db.collection("markers").doc(docId).delete().then(() => {
+                console.log("Marker successfully deleted!");
+                marker.setMap(null);
+                infoWindow.close();
+                window.location.reload();
+            }).catch((error) => {
+                console.error("Error removing marker: ", error);
             });
         });
     });
 
     marker.infoWindow = infoWindow;
 
+    if (openInfoWindowImmediately) {
+        setTimeout(() => infoWindow.open(map, marker), 200);
+    }
+
     return marker;
 }
+
+// Inside the map click event
+db.collection("markers").add({
+    lat: lat,
+    lng: lng
+}).then((docRef) => {
+    let marker = createMarker(lat, lng, docRef.id, map, db, true);
+    markersMapping[docRef.id] = marker;
+}).catch((error) => {
+    console.error("Error adding document: ", error);
+});
 
 // Create a new map
 function initMap() {
