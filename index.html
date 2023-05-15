@@ -46,28 +46,27 @@ function createMarker(lat, lng, docId, map, db, openInfoWindow = false) {
         map: map
     });
 
-    let infoWindow = new google.maps.InfoWindow({
-        content: "<textarea id='comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button>"
-    });
+  let infoWindow = new google.maps.InfoWindow({
+    content: "<p>Leave comment</p><textarea id='input-comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button><p>Comments</p><textarea id='display-comment-" + docId + "' readonly></textarea>"
+});
 
     marker.addListener("click", () => {
         infoWindow.open(map, marker);
     });
 
-    google.maps.event.addListener(infoWindow, 'domready', () => {
-    // Delay the addition of event listeners by 100ms to ensure all elements have been loaded
-    setTimeout(() => {
-        document.getElementById('save-' + docId).addEventListener('click', () => {
-            let comment = document.getElementById('comment-' + docId).value;
-            db.collection("markers").doc(docId).update({
-                comment: comment
-            }).then(() => {
-                console.log("Document successfully updated!");
-                location.reload();
-            }).catch((error) => {
-                console.error("Error updating document: ", error);
-            });
-        });
+    document.getElementById('save-' + docId).addEventListener('click', () => {
+    let comment = document.getElementById('input-comment-' + docId).value;
+    let existingComments = document.getElementById('display-comment-' + docId).value;
+    let newComments = existingComments + "\n" + new Date().toLocaleString() + " - " + comment;
+    db.collection("markers").doc(docId).update({
+        comment: newComments
+    }).then(() => {
+        console.log("Document successfully updated!");
+        location.reload();
+    }).catch((error) => {
+        console.error("Error updating document: ", error);
+    });
+});
 
         document.getElementById('delete-' + docId).addEventListener('click', () => {
             db.collection("markers").doc(docId).delete().then(() => {
@@ -119,7 +118,7 @@ function initMap() {
             } else if (change.type === "modified") {
                 let marker = markersMapping[docId];
                 let infoWindow = marker.infoWindow;
-                infoWindow.setContent("<textarea id='comment-" + docId + "'>" + (data.comment || '') + "</textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button>");
+                infoWindow.setContent("<p>Leave comment</p><textarea id='input-comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button><p>Comments</p><textarea id='display-comment-" + docId + "' readonly>" + (data.comment || '') + "</textarea>");
                 infoWindow.open(map, marker);
             } else if (change.type === "removed") {
                 let marker = markersMapping[docId];
