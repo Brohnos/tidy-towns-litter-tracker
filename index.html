@@ -119,7 +119,8 @@ function initMap() {
             } else if (change.type === "modified") {
                 let marker = markersMapping[docId];
                 let infoWindow = marker.infoWindow;
-                infoWindow.setContent("<textarea id='comment-" + docId + "'>" + (data.comment || '') + "</textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button>");
+                infoWindow.setContent("<textarea id='comment-" + docId + "'>" + (data.comment || '') + "</textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button>");
+                infoWindow.open(map, marker);
             } else if (change.type === "removed") {
                 let marker = markersMapping[docId];
                 marker.setMap(null);
