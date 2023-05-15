@@ -106,65 +106,24 @@ function initMap() {
 
     let markersMapping = {};
 
-    db.collection("markers").onSnapshot((querySnapshot) => {
-        querySnapshot.docChanges().forEach((change) => {
-            let data = change.doc.data();
-            let docId = change.doc.id;
+  db.collection("markers").onSnapshot((querySnapshot) => {
+    querySnapshot.docChanges().forEach((change) => {
+        let data = change.doc.data();
+        let docId = change.doc.id;
 
-            if (change.type === "added") {
-                let marker = createMarker(data.lat, data.lng, docId, map, db);
-                markersMapping[docId] = marker;
-            } else if (change.type === "modified") {
-                let marker = markersMapping[docId];
-                let infoWindow = marker.infoWindow;
-                infoWindow.setContent("<p>Leave comment</p><textarea id='input-comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button><p>Comments</p><textarea id='display-comment-" + docId + "' readonly>" + (data.comment || '') + "</textarea>");
-
-                marker.addListener("click", () => {
-                    setTimeout(() => { // Ensure the content is loaded before we try to add event listeners
-                        document.getElementById('save-' + docId).addEventListener('click', () => {
-                            let comment = document.getElementById('input-comment-' + docId).value;
-                            let existingComments = document.getElementById('display-comment-' + docId).value;
-                            let newComments = existingComments + "\n" + new Date().toLocaleString() + " - " + comment;
-                            db.collection("markers").doc(docId).update({
-                                comment: newComments
-                            }).then(() => {
-                                console.log("Document successfully updated!");
-                                location.reload();
-                            }).catch((error) => {
-                                console.error("Error updating document: ", error);
-                            });
-                        });
-
-                        document.getElementById('delete-' + docId).addEventListener('click', () => {
-                            db.collection("markers").doc(docId).delete().then(() => {
-                                console.log("Document successfully deleted!");
-                                location.reload();
-                            }).catch((error) => {
-                                console.error("Error removing document: ", error);
-                            });
-                        });
-
-                        document.getElementById('cancel-' + docId).addEventListener('click', () => {
-                            db.collection("markers").doc(docId).delete().then(() => {
-                                console.log("Marker cancelled!");
-                                location.reload();
-                            }).catch((error) => {
-                                console.error("Error removing document: ", error);
-                            });
-                        });
-                    }, 100);
-                });
-
-                if (!infoWindow.getMap() || infoWindow.getMap() === null) {
-                    infoWindow.open(map, marker);
-                }
-            } else if (change.type === "removed") {
-                let marker = markersMapping[docId];
-                marker.setMap(null);
-                delete markersMapping[docId];
-            }
-        });
+        if (change.type === "added" || change.type === "modified") {
+            let marker = markersMapping[docId] || createMarker(data.lat, data.lng, docId, map, db);
+            markersMapping[docId] = marker;
+            
+            let infoWindow = marker.infoWindow;
+            infoWindow.setContent("<p>Leave comment</p><textarea id='input-comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button><p>Comments</p><textarea id='display-comment-" + docId + "' readonly>" + (data.comment || '') + "</textarea>");
+        } else if (change.type === "removed") {
+            let marker = markersMapping[docId];
+            marker.setMap(null);
+            delete markersMapping[docId];
+        }
     });
+});
 
     // This section of code allows users to add new markers by clicking on the map
     map.addListener("click", (e) => {
