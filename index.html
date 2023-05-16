@@ -18,6 +18,7 @@
     <input id="email" type="email" placeholder="Email">
     <input id="password" type="password" placeholder="Password">
     <button id="sign-up-btn">Sign Up</button>
+    <p id="sign-up-message" style="display: none;"></p>
 </div>
     
     <div id="map"></div>
@@ -54,21 +55,24 @@ const firebaseConfig = {
     // Get a reference to the Firestore database
     let db = firebase.firestore();
         
-        document.getElementById('sign-up-btn').addEventListener('click', () => {
+document.getElementById('sign-up-btn').addEventListener('click', () => {
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
 
     firebase.auth().createUserWithEmailAndPassword(email, password)
-.then((userCredential) => {
-    // The user has been signed up and is logged in!
-    var user = userCredential.user;
-})
-.catch((error) => {
-    var errorCode = error.code;
-    var errorMessage = error.message;
-    // Log the full error to the console
-    console.error(error);
-});
+    .then((userCredential) => {
+        var user = userCredential.user;
+        // Display a success message
+        document.getElementById('sign-up-message').textContent = 'Signed up successfully. Check your email for a verification link.';
+        document.getElementById('sign-up-message').style.display = 'block';
+        // Send an email verification link
+        user.sendEmailVerification();
+    })
+    .catch((error) => {
+        var errorCode = error.code;
+        var errorMessage = error.message;
+        // Handle errors here.
+    });
 });
         
          // Get a reference to the login form and the input fields.
