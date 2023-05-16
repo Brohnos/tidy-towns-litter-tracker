@@ -49,11 +49,11 @@ const firebaseConfig = {
   measurementId: "G-SZZW59VS4Q"
 };
 
-    // Initialize Firebase
-    firebase.initializeApp(firebaseConfig);
+  // Initialize Firebase
+firebase.initializeApp(firebaseConfig);
 
-    // Get a reference to the Firestore database
-    let db = firebase.firestore();
+// Get a reference to the Firestore database
+let db = firebase.firestore();
         
 document.getElementById('sign-up-btn').addEventListener('click', () => {
     const email = document.getElementById('email').value;
@@ -74,89 +74,38 @@ document.getElementById('sign-up-btn').addEventListener('click', () => {
         // Handle errors here.
     });
 });
-        
-         // Get a reference to the login form and the input fields.
-    let loginForm = document.getElementById('login-form');
-    let emailField = document.getElementById('email-field');
-    let passwordField = document.getElementById('password-field');
 
-    // When the form is submitted, attempt to log in.
-    loginForm.addEventListener('submit', function(event) {
-        event.preventDefault(); // Prevent the form from being submitted the normal way.
+// Get a reference to the login form and the input fields.
+let loginForm = document.getElementById('login-form');
+let emailField = document.getElementById('email-field');
+let passwordField = document.getElementById('password-field');
+let signUpSection = document.getElementById('sign-up');
 
-        let email = emailField.value;
-        let password = passwordField.value;
+// When the form is submitted, attempt to log in.
+loginForm.addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent the form from being submitted the normal way.
 
-        firebase.auth().signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-            // Signed in 
-            let user = userCredential.user;
-            // user is now signed in, you can use the user object for its information.
-        })
-        .catch((error) => {
-            let errorCode = error.code;
-            let errorMessage = error.message;
-            // Show the error to your user.
-        });
+    let email = emailField.value;
+    let password = passwordField.value;
+
+    firebase.auth().signInWithEmailAndPassword(email, password)
+    .then((userCredential) => {
+        // Signed in 
+        let user = userCredential.user;
+        // user is now signed in, you can use the user object for its information.
+        // Show an alert to the user
+        alert("You are now logged in");
+
+        // Hide the login and sign up forms
+        loginForm.style.display = 'none';
+        signUpSection.style.display = 'none';
+    })
+    .catch((error) => {
+        let errorCode = error.code;
+        let errorMessage = error.message;
+        // Show the error to your user.
     });
-
-    // Create a new marker
-function createMarker(lat, lng, docId, map, db, openInfoWindow = false) {
-    let marker = new google.maps.Marker({
-        position: new google.maps.LatLng(lat, lng),
-        map: map
-    });
-
-    let infoWindow = new google.maps.InfoWindow({
-        content: "<p>Leave comment</p><textarea id='input-comment-" + docId + "'></textarea><button id='save-" + docId + "'>Save</button><button id='delete-" + docId + "'>Delete</button><button id='cancel-" + docId + "'>Cancel</button><p>Comments</p><textarea id='display-comment-" + docId + "' readonly></textarea>"
-    });
-
-    marker.addListener("click", () => {
-        infoWindow.open(map, marker);
-
-        setTimeout(() => { // Ensure the content is loaded before we try to add event listeners
-            document.getElementById('save-' + docId).addEventListener('click', () => {
-                let comment = document.getElementById('input-comment-' + docId).value;
-                let existingComments = document.getElementById('display-comment-' + docId).value;
-                let newComments = existingComments + "\n" + new Date().toLocaleString() + " - " + comment;
-                db.collection("markers").doc(docId).update({
-                    comment: newComments
-                }).then(() => {
-                    console.log("Document successfully updated!");
-                    location.reload();
-                }).catch((error) => {
-                    console.error("Error updating document: ", error);
-                });
-            });
-
-                        document.getElementById('delete-' + docId).addEventListener('click', () => {
-                db.collection("markers").doc(docId).delete().then(() => {
-                    console.log("Document successfully deleted!");
-                    location.reload();
-                }).catch((error) => {
-                    console.error("Error removing document: ", error);
-                });
-            });
-
-            document.getElementById('cancel-' + docId).addEventListener('click', () => {
-                db.collection("markers").doc(docId).delete().then(() => {
-                    console.log("Marker cancelled!");
-                    location.reload();
-                }).catch((error) => {
-                    console.error("Error removing document: ", error);
-                });
-            });
-        }, 100);
-    });
-
-    if(openInfoWindow) {
-        infoWindow.open(map, marker);
-    }
-
-    marker.infoWindow = infoWindow;
-
-    return marker;
-}
+});
 
 // Create a new map
 function initMap() {
@@ -189,22 +138,29 @@ function initMap() {
 
     // This section of code allows users to add new markers by clicking on the map
     map.addListener("click", (e) => {
-    db.collection("markers").add({
-        lat: e.latLng.lat(),
-        lng: e.latLng.lng(),
-        comment: ''
-    })
-    .then((docRef) => {
-        console.log("Document written with ID: ", docRef.id);
-        createMarker(e.latLng.lat(), e.latLng.lng(), docRef.id, map, db, true);
-    })
-    .catch((error) => {
-        console.error("Error adding document: ", error);
-    });
-});
+        var user = firebase.auth().currentUser;
 
+        if (user) {
+            // User is signed in, so you can add a marker
+            db.collection("markers").add({
+                lat: e.latLng.lat(),
+                lng: e.latLng.lng(),
+                comment: ''
+            })
+            .then((docRef) => {
+                console.log("Document written with ID: ", docRef.id);
+                createMarker(e.latLng.lat(), e.latLng.lng(), docRef.id, map, db, true);
+            })
+            .catch((error) => {
+                console.error("Error adding document: ", error);
+            });
+        } else {
+            // No user is signed in, so don't add a marker
+            alert("You must be logged in to add a marker!");
+        }
+    });
 }
-    </script>
+
     
     <!-- Google Maps JavaScript API -->
     <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDcfiNc46fa84JCUigitTvwvlUF_XNIGKs&callback=initMap"></script>
